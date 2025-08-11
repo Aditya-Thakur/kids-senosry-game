@@ -1,7 +1,16 @@
 {
     "rewrites": [
-      { "source": "/:path*/:file.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)", "destination": "/:file.:ext" },
-      { "source": "/(.*)", "destination": "/index.html" }
+      {
+        "source": "/(.*)",
+        "has": [
+          {
+            "type": "header",
+            "key": "accept",
+            "value": "text/html"
+          }
+        ],
+        "destination": "/index.html"
+      }
     ]
   }
   

@@ -1,8 +1,20 @@
 {
-  "rewrites": [
-    {
-      "source": "/((?!main\\.js|style\\.css|.*\\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)).*)",
-      "destination": "/index.html"
-    }
-  ]
+    "rewrites": [
+        {
+            "source": "/main.js",
+            "destination": "/main.js"
+        },
+        {
+            "source": "/style.css",
+            "destination": "/style.css"
+        },
+        {
+            "source": "/:file.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)",
+            "destination": "/:file.:ext"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ]
 }

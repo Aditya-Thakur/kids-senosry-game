@@ -295,9 +295,9 @@ class SensorySwipeGame {
       }
     }
     
-    // Remove old trails (after 5 seconds)
+    // Remove old trails (after 15 seconds)
     const currentTime = Date.now();
-    this.trails = this.trails.filter(trail => currentTime - trail.startTime < 5000);
+    this.trails = this.trails.filter(trail => currentTime - trail.startTime < 15000);
   }
   
   render() {

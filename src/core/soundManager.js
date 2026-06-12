@@ -61,9 +61,16 @@ function tone({ freq = 440, dur = 0.25, type = 'sine', gain = 0.18, glideTo = nu
   activeVoices += 1;
   osc.start(t0);
   osc.stop(t0 + dur + 0.05);
-  osc.onended = () => {
+  // Release the voice exactly once — via onended, or a timer fallback in
+  // case onended never fires (e.g. the context is interrupted on iOS).
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
     activeVoices = Math.max(0, activeVoices - 1);
   };
+  osc.onended = release;
+  setTimeout(release, (delay + dur + 0.5) * 1000);
 }
 
 function sequence(name, notes) {
@@ -155,4 +162,111 @@ export function playAnimal(name) {
   const notes = ANIMAL_VOICES[name];
   if (!notes) return;
   sequence(`animal-${name}`, notes);
+}
+
+// ---- Soft noise helper (for drums, claps, rain, wind) ----
+
+let noiseBuffer = null;
+function getNoiseBuffer() {
+  if (noiseBuffer) return noiseBuffer;
+  const len = ctx.sampleRate * 1.5;
+  noiseBuffer = ctx.createBuffer(1, len, ctx.sampleRate);
+  const data = noiseBuffer.getChannelData(0);
+  for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+  return noiseBuffer;
+}
+
+function noiseBurst({ dur = 0.15, gain = 0.12, freq = 1000, q = 0.8, type = 'bandpass', delay = 0 }) {
+  const c = ctx;
+  const t0 = c.currentTime + delay;
+  const src = c.createBufferSource();
+  src.buffer = getNoiseBuffer();
+  const filter = c.createBiquadFilter();
+  filter.type = type;
+  filter.frequency.value = freq;
+  filter.Q.value = q;
+  const g = c.createGain();
+  const vol = gain * (0.2 + 0.8 * appState.settings.volume);
+  g.gain.setValueAtTime(0.0001, t0);
+  g.gain.exponentialRampToValueAtTime(vol, t0 + 0.02);
+  g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+  src.connect(filter).connect(g).connect(masterGain);
+  activeVoices += 1;
+  src.start(t0);
+  src.stop(t0 + dur + 0.05);
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    activeVoices = Math.max(0, activeVoices - 1);
+  };
+  src.onended = release;
+  setTimeout(release, (delay + dur + 0.5) * 1000);
+}
+
+// ---- Instrument / effect voices for the music & matching games ----
+// Each entry is a function so noise + tones can mix freely.
+
+const EFFECTS = {
+  bell: () => {
+    tone({ freq: 880, dur: 0.6, type: 'sine', gain: 0.12 });
+    tone({ freq: 1760, dur: 0.4, type: 'sine', gain: 0.05 });
+  },
+  drum: () => {
+    tone({ freq: 110, glideTo: 50, dur: 0.18, type: 'sine', gain: 0.2 });
+    noiseBurst({ dur: 0.08, gain: 0.06, freq: 300, type: 'lowpass' });
+  },
+  clap: () => {
+    noiseBurst({ dur: 0.07, gain: 0.12, freq: 1600, q: 1.2 });
+    noiseBurst({ dur: 0.09, gain: 0.08, freq: 1400, q: 1.2, delay: 0.05 });
+  },
+  xylo: () => {
+    tone({ freq: 1047, dur: 0.3, type: 'triangle', gain: 0.12 });
+  },
+  drop: () => {
+    tone({ freq: 900 + Math.random() * 200, glideTo: 320, dur: 0.18, type: 'sine', gain: 0.12 });
+  },
+  chirp: () => {
+    tone({ freq: 1300, glideTo: 1700, dur: 0.09, type: 'sine', gain: 0.07 });
+    tone({ freq: 1500, glideTo: 1100, dur: 0.11, type: 'sine', gain: 0.07, delay: 0.12 });
+  },
+  rain: () => {
+    noiseBurst({ dur: 1.1, gain: 0.06, freq: 900, type: 'lowpass' });
+    tone({ freq: 800, glideTo: 400, dur: 0.15, type: 'sine', gain: 0.04, delay: 0.3 });
+  },
+  wind: () => {
+    noiseBurst({ dur: 1.0, gain: 0.05, freq: 420, type: 'lowpass' });
+  },
+  laugh: () => {
+    tone({ freq: 500, glideTo: 650, dur: 0.1, type: 'triangle', gain: 0.1 });
+    tone({ freq: 550, glideTo: 700, dur: 0.1, type: 'triangle', gain: 0.1, delay: 0.13 });
+    tone({ freq: 600, glideTo: 760, dur: 0.12, type: 'triangle', gain: 0.1, delay: 0.26 });
+  },
+  car: () => {
+    tone({ freq: 110, glideTo: 200, dur: 0.5, type: 'sawtooth', gain: 0.05 });
+  },
+  boing: () => {
+    tone({ freq: 160, glideTo: 420, dur: 0.25, type: 'triangle', gain: 0.12 });
+  },
+  yawn: () => {
+    tone({ freq: 420, glideTo: 220, dur: 0.55, type: 'sine', gain: 0.09 });
+  },
+  surprise: () => {
+    tone({ freq: 500, glideTo: 1000, dur: 0.2, type: 'sine', gain: 0.11 });
+  },
+};
+
+export function playEffect(name) {
+  const fn = EFFECTS[name];
+  if (!fn || !canPlay(`fx-${name}`)) return;
+  fn();
+}
+
+// Soft pentatonic scale for melody pads (C major pentatonic — always pretty,
+// never dissonant no matter what order a toddler taps).
+const PENTATONIC = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+
+export function playNote(i) {
+  if (!canPlay(`note-${i % PENTATONIC.length}`)) return;
+  tone({ freq: PENTATONIC[i % PENTATONIC.length], dur: 0.35, type: 'triangle', gain: 0.12 });
 }

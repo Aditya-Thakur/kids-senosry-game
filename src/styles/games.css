@@ -155,3 +155,397 @@
   right: max(16px, env(safe-area-inset-right));
   top: auto;
 }
+
+/* ---- Shared bits for the newer games ---- */
+
+.prompt-banner {
+  font-size: 1.5rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  padding: 14px 22px;
+  margin: 0 auto;
+  max-width: 90%;
+}
+
+.encourage {
+  min-height: 2.2rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink-light);
+}
+
+.happy-bounce {
+  animation: happyBounce 0.7s ease;
+}
+
+@keyframes happyBounce {
+  0%, 100% { transform: scale(1); }
+  30% { transform: scale(1.12) rotate(-3deg); }
+  60% { transform: scale(1.05) rotate(3deg); }
+}
+
+/* Musical Touch Pad */
+
+.pad-grid {
+  height: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 14px;
+  padding: 96px 16px max(16px, env(safe-area-inset-bottom));
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.music-pad {
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  display: grid;
+  place-items: center;
+  min-height: 110px;
+  transition: transform 0.12s ease, filter 0.12s ease;
+}
+
+.pad-emoji {
+  font-size: 56px;
+}
+
+.music-pad.lit {
+  animation: padLight 0.45s ease;
+}
+
+@keyframes padLight {
+  0% { transform: scale(1); filter: brightness(1); }
+  30% { transform: scale(1.06); filter: brightness(1.25); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* Texture Cards */
+
+.texture-label {
+  position: absolute;
+  bottom: max(24px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  padding: 12px 26px;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.texture-next {
+  bottom: max(16px, env(safe-area-inset-bottom));
+  right: max(16px, env(safe-area-inset-right));
+  top: auto;
+}
+
+/* Big / Small World */
+
+.bigsmall-wrap,
+.match-wrap,
+.faces-wrap,
+.findcolor-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 96px 18px max(20px, env(safe-area-inset-bottom));
+}
+
+.bigsmall-cards {
+  display: flex;
+  gap: 18px;
+  align-items: stretch;
+  width: 100%;
+  max-width: 560px;
+  flex: 0 1 auto;
+}
+
+.bigsmall-card {
+  flex: 1;
+  min-height: 230px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  display: grid;
+  place-items: center;
+}
+
+.bs-emoji.bs-big {
+  font-size: 110px;
+}
+
+.bs-emoji.bs-small {
+  font-size: 44px;
+}
+
+/* Match the Sound */
+
+.replay-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: var(--ink);
+  background: var(--butter);
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  padding: 18px 34px;
+  min-height: 72px;
+}
+
+.replay-btn:active {
+  transform: scale(0.96);
+}
+
+.match-cards {
+  display: flex;
+  gap: 18px;
+  width: 100%;
+  max-width: 520px;
+}
+
+.match-card {
+  flex: 1;
+  min-height: 190px;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.match-emoji {
+  font-size: 84px;
+}
+
+.match-label {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: var(--ink-light);
+}
+
+/* Magic Mirror Faces */
+
+.faces-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+  width: 100%;
+  max-width: 560px;
+}
+
+@media (min-width: 700px) {
+  .faces-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.face-card {
+  min-height: 140px;
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.face-emoji {
+  font-size: 64px;
+}
+
+.face-label {
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--ink);
+  opacity: 0.75;
+}
+
+/* Hide and Find Colors */
+
+.findcolor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  width: 100%;
+  max-width: 560px;
+}
+
+.findcolor-card {
+  min-height: 150px;
+  background: var(--swatch);
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  display: grid;
+  place-items: center;
+}
+
+.fc-emoji {
+  font-size: 64px;
+}
+
+.findcolor-card.fc-glow {
+  box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.9), 0 0 26px var(--swatch);
+}
+
+/* Calm Breathing Balloon */
+
+.breath-label {
+  position: absolute;
+  bottom: max(40px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: rgba(255, 255, 255, 0.92);
+  text-align: center;
+  z-index: 5;
+  transition: opacity 0.8s ease;
+}
+
+/* Baby DJ */
+
+.dj-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 96px 16px max(18px, env(safe-area-inset-bottom));
+  max-width: 620px;
+  margin: 0 auto;
+}
+
+.dj-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.dj-pad {
+  border-radius: var(--radius-block);
+  box-shadow: 0 6px 0 rgba(0, 0, 0, 0.25);
+  display: grid;
+  place-items: center;
+  min-height: 96px;
+}
+
+.dj-emoji {
+  font-size: 52px;
+}
+
+.dj-pad.lit {
+  animation: padLight 0.4s ease;
+}
+
+.dj-controls {
+  display: flex;
+  gap: 14px;
+  justify-content: center;
+}
+
+.dj-ctrl {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--ink);
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-block);
+  padding: 16px 28px;
+  min-height: 60px;
+  box-shadow: var(--shadow-block);
+}
+
+.dj-ctrl:disabled {
+  opacity: 0.45;
+}
+
+.dj-ctrl.recording {
+  background: var(--rose);
+}
+
+/* Real World Hunt */
+
+.hunt-wrap {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 96px 22px max(24px, env(safe-area-inset-bottom));
+  position: relative;
+}
+
+.hunt-card {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: var(--radius-block);
+  box-shadow: var(--shadow-block);
+  padding: 40px 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  max-width: 480px;
+  width: 100%;
+}
+
+.hunt-emoji {
+  font-size: 90px;
+}
+
+.hunt-text {
+  font-size: 1.6rem;
+  font-weight: 800;
+  text-align: center;
+  color: var(--ink);
+  line-height: 1.35;
+}
+
+.hunt-buttons {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hunt-skip {
+  background: var(--sky);
+}
+
+.hunt-confetti {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.confetti-bit {
+  position: absolute;
+  top: -40px;
+  font-size: 30px;
+  animation: confettiFall 1.4s ease-in forwards;
+}
+
+@keyframes confettiFall {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(85vh) rotate(200deg); opacity: 0; }
+}

@@ -43,6 +43,10 @@ export function onPointer(el, { down, move, up } = {}) {
 
   const touchStart = (e) => {
     e.preventDefault();
+    // Recovery: if a touchend/touchcancel was ever missed (iOS gestures,
+    // app switches, etc.) the stale id would block every future touch.
+    // A fresh touch while only one finger is on screen always wins.
+    if (activeTouchId !== null && e.touches.length === 1) activeTouchId = null;
     if (activeTouchId !== null) return; // ignore extra fingers
     const t = e.changedTouches[0];
     activeTouchId = t.identifier;

@@ -131,6 +131,8 @@ export function mount(container) {
     },
   });
 
+  const MAX_PARTICLES = 700;
+
   function spawn(a, b) {
     const slow = motionReduced();
     const d = Math.max(1, dist(a, b));
@@ -140,7 +142,13 @@ export function mount(container) {
       const t = i / count;
       const x = a.x + (b.x - a.x) * t + (Math.random() - 0.5) * 10;
       const y = a.y + (b.y - a.y) * t + (Math.random() - 0.5) * 10;
-      if (particles.length < 600) particles.push(new Particle(x, y, trailColor, trailStyle, slow));
+      // Never refuse a new trail particle: when the pool is full, retire
+      // the oldest ones instead. (Previously new particles were silently
+      // dropped, so trails appeared to stop after a few quick swipes.)
+      if (particles.length >= MAX_PARTICLES) {
+        particles.splice(0, particles.length - MAX_PARTICLES + 1);
+      }
+      particles.push(new Particle(x, y, trailColor, trailStyle, slow));
     }
   }
 

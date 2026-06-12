@@ -23,14 +23,14 @@ export function mount(container) {
   let running = true;
   let spawnTimer = 0;
 
-  function makeBubble() {
+  function makeBubble(speedBoost = 1) {
     const r = 44 + Math.random() * 36; // large, toddler-tappable
     return {
       x: r + Math.random() * (cv.width - r * 2),
       y: cv.height + r,
       r,
       color: pick(BUBBLE_COLORS),
-      vy: -(0.25 + Math.random() * 0.35) * (slow() ? 0.5 : 1),
+      vy: -(0.25 + Math.random() * 0.35) * (slow() ? 0.5 : 1) * speedBoost,
       wobble: Math.random() * Math.PI * 2,
     };
   }
@@ -67,9 +67,19 @@ export function mount(container) {
     const ctx = cv.ctx;
     ctx.clearRect(0, 0, cv.width, cv.height);
 
-    // Spawn slowly — never crowd the screen.
+    // Spawn slowly — never crowd the screen. But if the child pops
+    // everything, don't leave an empty screen: refill right away with
+    // faster-rising bubbles so play keeps flowing.
     spawnTimer += 1;
-    if (bubbles.length < 6 && spawnTimer > (slow() ? 160 : 90)) {
+    if (bubbles.length === 0) {
+      const burst = 3;
+      for (let i = 0; i < burst; i++) {
+        const b = makeBubble(slow() ? 1.6 : 2.2); // speedy entrance
+        b.y = cv.height + b.r + i * 90; // gentle stagger, not all at once
+        bubbles.push(b);
+      }
+      spawnTimer = 0;
+    } else if (bubbles.length < 6 && spawnTimer > (slow() ? 160 : 90)) {
       bubbles.push(makeBubble());
       spawnTimer = 0;
     }
@@ -81,6 +91,8 @@ export function mount(container) {
       if (b.y < -b.r) {
         b.y = cv.height + b.r;
         b.x = b.r + Math.random() * (cv.width - b.r * 2);
+        // Boosted bubbles settle back to normal drift after one pass.
+        b.vy = -(0.25 + Math.random() * 0.35) * (slow() ? 0.5 : 1);
       }
       // Soft bubble
       ctx.save();

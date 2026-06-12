@@ -1,0 +1,116 @@
+/* Sensory Playhouse — base styles.
+   Design language: a wooden toy-box. Warm cream "playmat" background,
+   chunky rounded "toy block" surfaces, soft candy tints, big friendly type.
+   Everything large, soft, and slow. */
+
+:root {
+  --bg: #fdf6ec;            /* warm playmat cream */
+  --ink: #5a4a42;           /* soft brown, never harsh black */
+  --ink-light: #8a766b;
+  --peach: #ffd9c7;
+  --sky: #cfe8ff;
+  --mint: #cdf0dd;
+  --lilac: #e3d9ff;
+  --butter: #fff1bd;
+  --rose: #ffd6e7;
+  --radius-block: 28px;
+  --shadow-block: 0 6px 0 rgba(90, 74, 66, 0.12);
+  --font-round: ui-rounded, "Hiragino Maru Gothic ProN", "Comic Sans MS",
+    "Comic Neue", system-ui, -apple-system, sans-serif;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden; /* games own the whole screen; no page scroll */
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: var(--font-round);
+  background: var(--bg);
+  color: var(--ink);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: manipulation;
+}
+
+#app {
+  height: 100%;
+  height: 100dvh;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  border: none;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+button:focus-visible {
+  outline: 4px solid #8ab6e8;
+  outline-offset: 3px;
+}
+
+/* Big round floating buttons (home, sound, reset) */
+.round-btn {
+  position: absolute;
+  width: 68px;
+  height: 68px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: var(--shadow-block);
+  font-size: 30px;
+  display: grid;
+  place-items: center;
+  z-index: 10;
+  transition: transform 0.15s ease;
+}
+
+.round-btn:active {
+  transform: scale(0.92);
+}
+
+.home-btn {
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+}
+
+.sound-btn {
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+}
+
+.big-btn {
+  font-size: 1.4rem;
+  font-weight: 700;
+  padding: 18px 36px;
+  border-radius: var(--radius-block);
+  background: var(--mint);
+  box-shadow: var(--shadow-block);
+  min-height: 64px;
+}
+
+.big-btn:active {
+  transform: translateY(3px);
+  box-shadow: 0 3px 0 rgba(90, 74, 66, 0.12);
+}
+
+/* Respect reduced motion everywhere, including the system setting. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

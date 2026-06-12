@@ -2,39 +2,22 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-    <title>Sensory Swipe Game</title>
-    <link rel="stylesheet" href="/src/style.css" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#fdf6ec" />
+    <meta
+      name="description"
+      content="A calm, safe sensory playhouse for toddlers. No ads, no login, no tracking."
+    />
+    <title>Sensory Playhouse</title>
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/home.css" />
+    <link rel="stylesheet" href="/src/styles/games.css" />
   </head>
   <body>
-    <!-- Home Screen -->
-    <div id="homeScreen" class="screen">
-      <div class="home-container">
-        <h1 class="game-title">Sensory Swipe</h1>
-        <p class="game-subtitle">Create beautiful trails with your finger!</p>
-        <button id="playButton" class="play-button">
-          <span class="play-icon">▶</span>
-          <span class="play-text">Start Playing</span>
-        </button>
-      </div>
-    </div>
-
-    <!-- Game Screen -->
-    <div id="gameScreen" class="screen hidden">
-      <canvas id="gameCanvas"></canvas>
-      <button id="homeButton" class="home-button">
-        <span>🏠</span>
-      </button>
-    </div>
-
-    <!-- Audio elements -->
-    <audio id="swipeSound1" preload="auto">
-      <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwQCAwBgAhBE6qBAA==" type="audio/wav">
-    </audio>
-    <audio id="swipeSound2" preload="auto">
-      <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwhBCaJ0/LNeSsFJnrI8N2QQAoUXrTp66hVFApGn+DyvmwQCAwBgAhBE6qBAA==" type="audio/wav">
-    </audio>
-
+    <div id="app" aria-live="polite"></div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -27,10 +27,21 @@ function swap(renderFn, ...args) {
 
 export const router = {
   goHome() {
+    const savedScroll = appState.homeScrollTop || 0;
     appState.currentGameId = null;
     swap(renderHome);
+    // Restore the grid scroll position after the DOM is ready.
+    // rAF gives the browser one layout pass so scrollTop takes effect.
+    requestAnimationFrame(() => {
+      const grid = document.querySelector('.game-grid');
+      if (grid && savedScroll > 0) grid.scrollTop = savedScroll;
+    });
   },
   async goGame(id) {
+    // Save scroll position before leaving the home screen.
+    const grid = document.querySelector('.game-grid');
+    if (grid) appState.homeScrollTop = grid.scrollTop;
+
     const game = getGame(id);
     if (!game) return router.goHome();
     appState.currentGameId = id;

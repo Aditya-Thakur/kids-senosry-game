@@ -1,10 +1,11 @@
 // Game 8: Touch the Light.
 // One big, softly pulsing light waits patiently on screen. Tapping it
 // bursts it into sparkles and a new light fades in somewhere else.
-// The light never runs away and never disappears on its own — no time
-// pressure, no fail state. Missed taps still sparkle a little.
+// The light never runs away and never disappears on its own.
+//
+// Input uses Pointer Events + setPointerCapture for reliability.
 
-import { setupCanvas, onPointer, pick } from '../core/canvasUtils.js';
+import { setupCanvas, pick } from '../core/canvasUtils.js';
 import { motionReduced } from '../core/appState.js';
 import { sounds } from '../core/soundManager.js';
 
@@ -24,14 +25,14 @@ export function mount(container) {
   let t = 0;
 
   function newLight() {
-    const r = Math.max(56, Math.min(cv.width, cv.height) * 0.12);
-    const margin = r + 40;
+    const r = Math.max(56, Math.min(cv.width, cv.height) * 0.14);
+    const margin = r + 60;
     light = {
-      x: margin + Math.random() * Math.max(1, cv.width - margin * 2),
-      y: margin + 80 + Math.random() * Math.max(1, cv.height - margin * 2 - 80),
+      x: margin + Math.random() * Math.max(10, cv.width - margin * 2),
+      y: margin + 80 + Math.random() * Math.max(10, cv.height - margin * 2 - 80),
       r,
       color: pick(LIGHT_COLORS),
-      appear: 0, // fades in gently
+      appear: 0,
     };
   }
   newLight();
@@ -52,19 +53,34 @@ export function mount(container) {
     }
   }
 
-  const offPointer = onPointer(canvas, {
-    down(p) {
-      // Very forgiving target: radius + 36px.
-      if (light && light.appear > 0.5 && Math.hypot(p.x - light.x, p.y - light.y) < light.r + 36) {
+  // ---- Pointer Events ----
+  const pt = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  function onDown(e) {
+    e.preventDefault();
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+    const p = pt(e);
+
+    if (light) {
+      // Hit test uses actual drawn radius (scaled by appear) + generous padding.
+      const drawnR = light.r * light.appear + 40;
+      if (Math.hypot(p.x - light.x, p.y - light.y) < Math.max(60, drawnR)) {
         burst(light.x, light.y, light.color, true);
         sounds.chime();
+        light = null; // clear immediately; newLight() below creates the next one
         newLight();
-      } else {
-        burst(p.x, p.y, '#ffffff', false);
-        sounds.sparkle();
+        return;
       }
-    },
-  });
+    }
+    // Missed tap — still give friendly sparkle feedback
+    burst(p.x, p.y, '#ffffff', false);
+    sounds.sparkle();
+  }
+
+  canvas.addEventListener('pointerdown', onDown, { passive: false });
 
   function loop() {
     if (!running) return;
@@ -72,23 +88,22 @@ export function mount(container) {
     ctx.clearRect(0, 0, cv.width, cv.height);
     t += 1;
 
-    // Tiny ambient stars so the sky feels alive but calm.
+    // Ambient stars
     ctx.save();
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
     for (let i = 0; i < 14; i++) {
       const sx = ((i * 137) % 100) / 100 * cv.width;
       const sy = ((i * 89) % 100) / 100 * cv.height;
-      const tw = 0.5 + 0.5 * Math.sin(t / 60 + i);
-      ctx.globalAlpha = 0.15 + 0.2 * tw;
+      ctx.globalAlpha = 0.15 + 0.2 * (0.5 + 0.5 * Math.sin(t / 60 + i));
+      ctx.fillStyle = '#fff';
       ctx.beginPath();
       ctx.arc(sx, sy, 1.5, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
 
-    // The light: soft pulse, gentle fade-in.
+    // The light
     if (light) {
-      if (light.appear < 1) light.appear = Math.min(1, light.appear + (slow() ? 0.015 : 0.03));
+      if (light.appear < 1) light.appear = Math.min(1, light.appear + (slow() ? 0.02 : 0.04));
       const pulse = slow() ? 1 : 1 + Math.sin(t / 30) * 0.06;
       const r = light.r * pulse * light.appear;
       ctx.save();
@@ -104,7 +119,7 @@ export function mount(container) {
       ctx.restore();
     }
 
-    // Sparkles.
+    // Sparkles
     sparks = sparks.filter((s) => s.life > 0);
     for (const s of sparks) {
       s.x += s.vx;
@@ -116,7 +131,7 @@ export function mount(container) {
       ctx.globalAlpha = Math.max(0, s.life);
       ctx.fillStyle = s.color;
       ctx.beginPath();
-      ctx.arc(s.x, s.y, s.size * s.life, 0, Math.PI * 2);
+      ctx.arc(s.x, s.y, Math.max(0.5, s.size * s.life), 0, Math.PI * 2);
       ctx.fill();
       ctx.restore();
     }
@@ -129,7 +144,7 @@ export function mount(container) {
     destroy() {
       running = false;
       if (raf) cancelAnimationFrame(raf);
-      offPointer();
+      canvas.removeEventListener('pointerdown', onDown);
       cv.destroy();
     },
   };

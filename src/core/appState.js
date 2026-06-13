@@ -8,6 +8,7 @@ const listeners = new Set();
 export const appState = {
   settings: loadSettings(),
   currentGameId: null,
+  homeScrollTop: 0, // persisted so the grid scroll position survives game visits
 };
 
 export function updateSettings(patch) {

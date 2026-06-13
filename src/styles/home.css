@@ -117,12 +117,30 @@
 }
 
 .parent-btn.holding {
-  animation: holdPulse 2.5s linear forwards;
+  background: var(--butter);
 }
 
-@keyframes holdPulse {
-  from { background: rgba(255, 255, 255, 0.85); }
-  to { background: var(--mint); transform: scale(1.06); }
+/* SVG progress ring inside the hold button */
+.hold-ring {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.hold-ring circle {
+  fill: none;
+  stroke: #7fbf9e;
+  stroke-width: 4;
+  stroke-linecap: round;
+  /* start from the top; dasharray = full circumference */
+  stroke-dasharray: 113.1; /* 2π × 18 */
+  stroke-dashoffset: 113.1;
+  transform: rotate(-90deg);
+  transform-origin: 22px 22px;
 }
 
 /* Parent settings */

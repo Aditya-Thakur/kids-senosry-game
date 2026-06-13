@@ -2,6 +2,10 @@
 // Big bubbles drift slowly upward. Tapping a bubble pops it into a tiny
 // gentle surprise (star / flower / butterfly). Taps that miss still make
 // a small sparkle so random tapping always feels responsive. No fail state.
+//
+// Speed rule: each time the child pops every bubble on screen, the base
+// rise speed goes up by +20 %.  This gives a satisfying "I cleared the
+// board!" reward without ever becoming scary-fast (speed is capped at 4×).
 
 import { setupCanvas, onPointer, pick } from '../core/canvasUtils.js';
 import { motionReduced } from '../core/appState.js';
@@ -22,19 +26,24 @@ export function mount(container) {
   let raf = null;
   let running = true;
   let spawnTimer = 0;
+  let clearCount = 0; // how many times the board has been fully cleared
 
-  function makeBubble(speedBoost = 1) {
+  // Speed multiplier: grows with clearCount, capped so it never feels frantic.
+  const speedMult = () => Math.min(4, 1 + clearCount * 0.2) * (slow() ? 0.5 : 1);
+
+  function makeBubble(extraBoost = 1) {
     const r = 44 + Math.random() * 36; // large, toddler-tappable
     return {
       x: r + Math.random() * (cv.width - r * 2),
       y: cv.height + r,
       r,
       color: pick(BUBBLE_COLORS),
-      vy: -(0.25 + Math.random() * 0.35) * (slow() ? 0.5 : 1) * speedBoost,
+      vy: -(0.25 + Math.random() * 0.35) * speedMult() * extraBoost,
       wobble: Math.random() * Math.PI * 2,
     };
   }
 
+  // Pre-place 5 bubbles scattered across the screen so it's immediately fun.
   for (let i = 0; i < 5; i++) {
     const b = makeBubble();
     b.y = Math.random() * cv.height;
@@ -43,7 +52,7 @@ export function mount(container) {
 
   const offPointer = onPointer(canvas, {
     down(p) {
-      // Forgiving hit area: bubble radius + 20px.
+      // Forgiving hit area: bubble radius + 20 px.
       let popped = false;
       for (let i = bubbles.length - 1; i >= 0; i--) {
         const b = bubbles[i];
@@ -62,20 +71,22 @@ export function mount(container) {
     },
   });
 
-  function loop(t) {
+  function loop() {
     if (!running) return;
     const ctx = cv.ctx;
     ctx.clearRect(0, 0, cv.width, cv.height);
 
-    // Spawn slowly — never crowd the screen. But if the child pops
-    // everything, don't leave an empty screen: refill right away with
-    // faster-rising bubbles so play keeps flowing.
+    // ---- Spawn logic ----
+    // If the board is clear the child just popped everything.
+    // Increment clearCount (increases future speed), then burst in fresh
+    // bubbles that arrive quickly so there's never an empty moment.
     spawnTimer += 1;
     if (bubbles.length === 0) {
-      const burst = 3;
+      clearCount += 1;
+      const burst = 3 + Math.min(3, clearCount); // up to 6 bubbles at once
       for (let i = 0; i < burst; i++) {
-        const b = makeBubble(slow() ? 1.6 : 2.2); // speedy entrance
-        b.y = cv.height + b.r + i * 90; // gentle stagger, not all at once
+        const b = makeBubble(1.5); // bonus speed so they arrive fast
+        b.y = cv.height + b.r + i * 70;
         bubbles.push(b);
       }
       spawnTimer = 0;
@@ -84,17 +95,18 @@ export function mount(container) {
       spawnTimer = 0;
     }
 
+    // ---- Update & draw bubbles ----
     for (const b of bubbles) {
       b.y += b.vy;
       b.wobble += 0.01;
       b.x += Math.sin(b.wobble) * (slow() ? 0.1 : 0.3);
       if (b.y < -b.r) {
+        // Recycle bubble that drifted off the top — reset to base speed.
         b.y = cv.height + b.r;
         b.x = b.r + Math.random() * (cv.width - b.r * 2);
-        // Boosted bubbles settle back to normal drift after one pass.
-        b.vy = -(0.25 + Math.random() * 0.35) * (slow() ? 0.5 : 1);
+        b.vy = -(0.25 + Math.random() * 0.35) * speedMult();
       }
-      // Soft bubble
+      // Soft translucent bubble
       ctx.save();
       ctx.globalAlpha = 0.85;
       const g = ctx.createRadialGradient(b.x - b.r * 0.3, b.y - b.r * 0.3, b.r * 0.1, b.x, b.y, b.r);
@@ -112,7 +124,7 @@ export function mount(container) {
       ctx.restore();
     }
 
-    // Bursts: emoji gently floating up and fading.
+    // ---- Bursts: emoji floating up and fading ----
     bursts = bursts.filter((s) => s.life > 0);
     for (const s of bursts) {
       s.life -= slow() ? 0.008 : 0.014;

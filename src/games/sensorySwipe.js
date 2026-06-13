@@ -1,9 +1,13 @@
 // Game 1: Sensory Swipe — the original game, preserved and polished.
-// Swiping paints soft particle trails. Improvements over the original:
-// shared sound manager (throttled, toggleable), reduced-motion support,
-// gentler background shifts, DPR-safe canvas, and module structure.
+// Swiping paints soft particle trails.
+//
+// Input rewritten to use the Pointer Events API (pointerdown / pointermove /
+// pointerup / pointercancel + setPointerCapture).  This is the most reliable
+// cross-platform approach: it handles touch, mouse, and stylus uniformly, and
+// setPointerCapture means move/up always reach the canvas even when the finger
+// wanders over the UI buttons.
 
-import { setupCanvas, onPointer, dist, pick } from '../core/canvasUtils.js';
+import { setupCanvas, dist, pick } from '../core/canvasUtils.js';
 import { motionReduced } from '../core/appState.js';
 import { sounds } from '../core/soundManager.js';
 
@@ -46,6 +50,7 @@ class Particle {
 
   render(ctx) {
     const s = this.size * this.life;
+    if (s <= 0) return;
     ctx.save();
     ctx.globalAlpha = Math.max(0, this.life) * 0.9;
     ctx.translate(this.x, this.y);
@@ -70,12 +75,15 @@ class Particle {
       ctx.closePath();
       ctx.fill();
     } else {
-      const g = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
-      g.addColorStop(0, this.color);
-      g.addColorStop(1, 'rgba(255,255,255,0)');
-      ctx.fillStyle = g;
+      // sparkle — guard against zero-radius gradient
+      if (s > 0.5) {
+        const g = ctx.createRadialGradient(0, 0, 0, 0, 0, s);
+        g.addColorStop(0, this.color);
+        g.addColorStop(1, 'rgba(255,255,255,0)');
+        ctx.fillStyle = g;
+      }
       ctx.beginPath();
-      ctx.arc(0, 0, s, 0, Math.PI * 2);
+      ctx.arc(0, 0, Math.max(0.5, s), 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.restore();
@@ -87,9 +95,21 @@ export function mount(container) {
   const canvas = container.querySelector('canvas');
   const cv = setupCanvas(canvas);
 
-  let particles = [];
+  // Pool kept as a fixed-size ring to avoid GC churn.
+  const MAX_PARTICLES = 600;
+  const pool = new Array(MAX_PARTICLES).fill(null);
+  let head = 0; // next write position (ring buffer)
+  let count = 0;
+
+  function addParticle(x, y) {
+    const slow = motionReduced();
+    pool[head] = new Particle(x, y, trailColor, trailStyle, slow);
+    head = (head + 1) % MAX_PARTICLES;
+    if (count < MAX_PARTICLES) count++;
+  }
+
   let last = null;
-  let drawing = false;
+  let activePointerId = null;
   let trailColor = pick(COLORS);
   let trailStyle = pick(['sparkle', 'bubble', 'star']);
   let bgIndex = 0;
@@ -104,62 +124,87 @@ export function mount(container) {
   };
   setBg();
 
-  const offPointer = onPointer(canvas, {
-    down(p) {
-      drawing = true;
-      last = p;
-      trailColor = pick(COLORS);
-      trailStyle = pick(['sparkle', 'bubble', 'star']);
-      bgIndex += 1;
-      setBg();
-      // Sound only occasionally, never on every touch event.
-      const now = performance.now();
-      if (now - lastSound > 600) {
-        sounds.blip();
-        lastSound = now;
-      }
-      spawn(p, p);
-    },
-    move(p) {
-      if (!drawing || !last) return;
-      spawn(last, p);
-      last = p;
-    },
-    up() {
-      drawing = false;
-      last = null;
-    },
-  });
+  // --- Pointer Events (replaces the onPointer wrapper) ---
 
-  const MAX_PARTICLES = 700;
+  const pt = (e) => {
+    const rect = canvas.getBoundingClientRect();
+    return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  function onDown(e) {
+    if (activePointerId !== null) return; // already tracking one finger
+    e.preventDefault();
+    activePointerId = e.pointerId;
+    // setPointerCapture: all future events for this pointer go to the canvas,
+    // even if the finger moves over the home/sound buttons.
+    try { canvas.setPointerCapture(e.pointerId); } catch {}
+
+    const p = pt(e);
+    last = p;
+    trailColor = pick(COLORS);
+    trailStyle = pick(['sparkle', 'bubble', 'star']);
+    bgIndex += 1;
+    setBg();
+
+    const now = performance.now();
+    if (now - lastSound > 600) {
+      sounds.blip();
+      lastSound = now;
+    }
+    spawn(p, p);
+  }
+
+  function onMove(e) {
+    if (e.pointerId !== activePointerId || !last) return;
+    e.preventDefault();
+    const p = pt(e);
+    spawn(last, p);
+    last = p;
+  }
+
+  function onUp(e) {
+    if (e.pointerId !== activePointerId) return;
+    activePointerId = null;
+    last = null;
+  }
+
+  canvas.addEventListener('pointerdown', onDown, { passive: false });
+  canvas.addEventListener('pointermove', onMove, { passive: false });
+  canvas.addEventListener('pointerup', onUp);
+  canvas.addEventListener('pointercancel', onUp);
+
+  // --- Particle spawning ---
 
   function spawn(a, b) {
     const slow = motionReduced();
     const d = Math.max(1, dist(a, b));
     const step = slow ? 14 : 7;
-    const count = Math.min(20, Math.max(1, Math.floor(d / step)));
-    for (let i = 0; i < count; i++) {
-      const t = i / count;
-      const x = a.x + (b.x - a.x) * t + (Math.random() - 0.5) * 10;
-      const y = a.y + (b.y - a.y) * t + (Math.random() - 0.5) * 10;
-      // Never refuse a new trail particle: when the pool is full, retire
-      // the oldest ones instead. (Previously new particles were silently
-      // dropped, so trails appeared to stop after a few quick swipes.)
-      if (particles.length >= MAX_PARTICLES) {
-        particles.splice(0, particles.length - MAX_PARTICLES + 1);
-      }
-      particles.push(new Particle(x, y, trailColor, trailStyle, slow));
+    const n = Math.min(20, Math.max(1, Math.floor(d / step)));
+    for (let i = 0; i < n; i++) {
+      const t = i / n;
+      addParticle(
+        a.x + (b.x - a.x) * t + (Math.random() - 0.5) * 10,
+        a.y + (b.y - a.y) * t + (Math.random() - 0.5) * 10
+      );
     }
   }
+
+  // --- Render loop ---
 
   function loop() {
     if (!running) return;
     cv.ctx.clearRect(0, 0, cv.width, cv.height);
-    particles = particles.filter((p) => p.life > 0);
-    for (const p of particles) {
+
+    // Iterate the ring buffer without creating a new array.
+    const start = count < MAX_PARTICLES ? 0 : head;
+    for (let i = 0; i < count; i++) {
+      const idx = (start + i) % MAX_PARTICLES;
+      const p = pool[idx];
+      if (!p || p.life <= 0) continue;
       p.update();
       p.render(cv.ctx);
     }
+
     raf = requestAnimationFrame(loop);
   }
   loop();
@@ -168,7 +213,10 @@ export function mount(container) {
     destroy() {
       running = false;
       if (raf) cancelAnimationFrame(raf);
-      offPointer();
+      canvas.removeEventListener('pointerdown', onDown);
+      canvas.removeEventListener('pointermove', onMove);
+      canvas.removeEventListener('pointerup', onUp);
+      canvas.removeEventListener('pointercancel', onUp);
       cv.destroy();
     },
   };
